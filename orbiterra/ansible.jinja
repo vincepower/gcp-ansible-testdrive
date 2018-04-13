@@ -38,7 +38,8 @@ resources:
 - name: {{ common.GenerateUniqueName( 'fw-rule', env['deployment'], 'ssh' ) }}
   type: compute.v1.firewall
   properties:
-    network: $(ref.{{ network }}.selfLink) sourceRanges: [ "0.0.0.0/0" ]
+    network: $(ref.{{ network }}.selfLink)
+    sourceRanges: [ "0.0.0.0/0" ]
     allowed:
     - IPProtocol: TCP
       ports: [ "22" ]
