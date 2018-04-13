@@ -1,0 +1,265 @@
+{% import 'helpers-common.jinja' as common %}
+
+{% set zonesplit = properties["zone"].split('-') %}
+{% set region = zonesplit[0] + "-" + zonesplit[1] %}
+
+{% set network = env["deployment"] + "-network" %}
+{% set subnet0 = env["deployment"] + "-subnet0" %}
+
+{% set vmansible = common.GenerateUniqueName( 'vm', env['deployment'], 'ansible' ) %}
+{% set vmwebserver = common.GenerateUniqueName( 'vm', env['deployment'], 'webserver' ) %}
+{% set vmdb = common.GenerateUniqueName( 'vm', env['deployment'], 'db' ) %}
+
+{% set dnszone = 'gcp-testdrive-openshift-com' %}
+{% set configName = env["deployment"] + "-startup-config" %}
+{% set waiterName = env["deployment"] + "-startup-waiter" %}
+
+{% set dnsdeploymentpart = env["deployment"][-3:] %}
+
+resources:
+
+{# NETWORK #}
+
+- name: {{ network }}
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+
+- name: {{ subnet0 }}
+  type: compute.v1.subnetwork
+  properties:
+    ipCidrRange: 10.128.0.0/24
+    network: $(ref.{{ network }}.selfLink)
+    region: {{ region }}
+
+{# NETWORK #}
+{# FIREWALL #}
+
+- name: {{ common.GenerateUniqueName( 'fw-rule', env['deployment'], 'ssh' ) }}
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.{{ network }}.selfLink) sourceRanges: [ "0.0.0.0/0" ]
+    allowed:
+    - IPProtocol: TCP
+      ports: [ "22" ]
+
+- name: {{ common.GenerateUniqueName( 'fw-rule', env['deployment'], 'webserver' ) }}
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.{{ network }}.selfLink)
+    sourceRanges: [ "0.0.0.0/0" ]
+    targetTags: [ "testdrive-webserver" ]
+    allowed:
+    - IPProtocol: TCP
+      ports: [ "80", "443" ]
+
+- name: {{ common.GenerateUniqueName( 'fw-rule', env['deployment'], 'db' ) }}
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.{{ network }}.selfLink)
+    sourceRanges: [ "0.0.0.0/0" ]
+    targetTags: [ "testdrive-db" ]
+    allowed:
+    - IPProtocol: TCP
+      ports: [ "3306" ]
+
+- name: {{ common.GenerateUniqueName( 'fw-rule', env['deployment'], 'default' ) }}
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.{{ network }}.selfLink)
+    sourceRanges: [ "10.128.0.0/16" ]
+    allowed:
+    - IPProtocol: TCP
+      ports: [ "0-65535" ]
+    - IPProtocol: UDP
+      ports: [ "0-65535" ]
+    - IPProtocol: ICMP
+
+{# FIREWALL #}
+{# INSTANCES #}
+
+- name: {{ vmansible }}
+  type: compute.v1.instance
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties['mtype-default'] }}
+    metadata:
+      items:
+      - key: userPassword
+        value: $(ref.userPassword.string)
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          echo '10.128.0.101 {{ vmansible }}' >> /etc/hosts
+          echo '10.128.0.102 {{ vmwebserver }}' >> /etc/hosts
+          echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
+          userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
+          echo $userPassword | passwd ansible
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ common.GenerateUniqueName( 'disk', env['deployment'], 'ansible' ) }}
+        sourceImage: {{ properties["image-ansible"] }}
+    networkInterfaces:
+    - network: $(ref.{{ network }}.selfLink)
+      subnetwork: $(ref.{{ subnet0 }}.selfLink)
+      networkIP: 10.128.0.101
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items:
+        - 'testdrive-ansible'
+    serviceAccounts:
+    - email: default
+      scopes:
+        - 'https://www.googleapis.com/auth/compute'
+        - 'https://www.googleapis.com/auth/servicecontrol'
+        - 'https://www.googleapis.com/auth/service.management'
+        - 'https://www.googleapis.com/auth/logging.write'
+        - 'https://www.googleapis.com/auth/monitoring.write'
+        - 'https://www.googleapis.com/auth/trace.append'
+        - 'https://www.googleapis.com/auth/devstorage.read_only'
+        - 'https://www.googleapis.com/auth/userinfo.email'
+
+- name: {{ vmwebserver }}
+  type: compute.v1.instance
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties['mtype-default'] }}
+    metadata:
+      items:
+      - key: userPassword
+        value: $(ref.userPassword.string)
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          echo '10.128.0.101 {{ vmansible }}' >> /etc/hosts
+          echo '10.128.0.102 {{ vmwebserver }}' >> /etc/hosts
+          echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
+          userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
+          echo $userPassword | passwd ansible
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ common.GenerateUniqueName( 'disk', env['deployment'], 'webserver' ) }}
+        sourceImage: {{ properties["image-ansible"] }}
+    networkInterfaces:
+    - network: $(ref.{{ network }}.selfLink)
+      subnetwork: $(ref.{{ subnet0 }}.selfLink)
+      networkIP: 10.128.0.102
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items:
+        - 'testdrive-webserver'
+    serviceAccounts:
+    - email: default
+      scopes:
+        - 'https://www.googleapis.com/auth/cloudruntimeconfig'
+        - 'https://www.googleapis.com/auth/compute'
+        - 'https://www.googleapis.com/auth/servicecontrol'
+        - 'https://www.googleapis.com/auth/service.management'
+        - 'https://www.googleapis.com/auth/logging.write'
+        - 'https://www.googleapis.com/auth/monitoring.write'
+        - 'https://www.googleapis.com/auth/trace.append'
+        - 'https://www.googleapis.com/auth/devstorage.read_only'
+        - 'https://www.googleapis.com/auth/userinfo.email'
+
+- name: {{ vmdb }}
+  type: compute.v1.instance
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties['mtype-default'] }}
+    metadata:
+      items:
+      - key: userPassword
+        value: $(ref.userPassword.string)
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          echo '10.128.0.101 {{ vmansible }}' >> /etc/hosts
+          echo '10.128.0.102 {{ vmwebserver }}' >> /etc/hosts
+          echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
+          userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
+          echo $userPassword | passwd ansible
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ common.GenerateUniqueName( 'disk', env['deployment'], 'db' ) }}
+        sourceImage: {{ properties["image-ansible"] }}
+    networkInterfaces:
+    - network: $(ref.{{ network }}.selfLink)
+      subnetwork: $(ref.{{ subnet0 }}.selfLink)
+      networkIP: 10.128.0.103
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items:
+        - 'testdrive-db'
+    serviceAccounts:
+    - email: default
+      scopes:
+        - 'https://www.googleapis.com/auth/compute'
+        - 'https://www.googleapis.com/auth/servicecontrol'
+        - 'https://www.googleapis.com/auth/service.management'
+        - 'https://www.googleapis.com/auth/logging.write'
+        - 'https://www.googleapis.com/auth/monitoring.write'
+        - 'https://www.googleapis.com/auth/trace.append'
+        - 'https://www.googleapis.com/auth/devstorage.read_only'
+        - 'https://www.googleapis.com/auth/userinfo.email'
+        - 'https://www.googleapis.com/auth/cloud-platform'
+
+- name: {{ configName }}
+  type: runtimeconfig.v1beta1.config
+  properties:
+    config: {{ configName }}
+
+- name: {{ waiterName }}
+  type: runtimeconfig.v1beta1.waiter
+  metadata:
+    dependsOn:
+    - {{ vmansible }}
+  properties:
+    parent: $(ref.{{ configName }}.name)
+    waiter: {{ waiterName }}
+    timeout: 1200s
+    success:
+      cardinality:
+        path: /success
+        number: 1
+    failure:
+      cardinality:
+        path: /failure
+        number: 1
+
+{# INSTANCES #}
+
+- name: userPassword
+  type: helpers-random-string.py
+  properties:
+    length: 10
+
+outputs:
+- name: AnsibleConsole
+  value: ssh://ansible.$(ref.{{ vmansible }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: WebConsole
+  value: http://web.$(ref.{{ vmwebserver }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: DbConsole
+  value: mysql://db.$(ref.{{ vmdb }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: user
+  value: ansible
+- name: password
+  value: $(ref.userPassword.string)
+

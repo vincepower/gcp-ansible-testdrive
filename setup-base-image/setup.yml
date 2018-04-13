@@ -1,0 +1,57 @@
+---
+- name: Packages
+  hosts: all
+  tasks:
+    - name: "Install common software"
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - python
+        - unzip
+        - bash-completion
+        - tmux
+        - bind-utils
+        - curl
+        - wget
+        - ansible
+        - git
+        - nano
+        - vim-enhanced
+
+- name: Configure /etc/hosts files
+  hosts: all
+  tasks:  
+    - name: Add mappings to /etc/hosts
+      blockinfile:
+        dest: /etc/hosts
+        marker: "\n# {mark} ANSIBLE MANAGED BLOCK"
+        block: |
+          10.128.0.101  ansible-engine
+          10.128.0.102  ansible-webserver
+          10.128.0.103  ansible-db
+        backup: yes
+
+- name: Configure installer on master
+  hosts: all
+  tasks:
+    - name: Create root .ssh folder
+      file:
+        dest: "/root/.ssh"
+        mode: 0700
+        state: directory
+    - name: Deploy keyfile as id_rsa
+      copy:
+        src: "{{ keyfile }}"
+        dest: "/root/.ssh/id_rsa"
+        mode: 0600
+    - name: Deploy keyfile as id_rsa.pub
+      copy:
+        src: "keyfile.pub"
+        dest: "/root/.ssh/id_rsa.pub"
+        mode: 0644
+    - name: Create Ansible hosts file
+      template:
+        src: "hosts_template.j2"
+        dest: "/etc/ansible/hosts"
+

@@ -1,0 +1,19 @@
+resources:
+- name: ansible-engine 
+  type: ansible-engine.jinja
+  properties:
+    zone: us-central1-a
+    image-ansible: https://www.googleapis.com/compute/v1/projects/openshift-test-drive/global/images/aetd-v1
+    mtype-default: n1-standard-1
+
+outputs:
+- name: AnsibleConsole
+  value: $(ref.ansible.AnsibleConsole)
+- name: WebConsole
+  value: $(ref.ansible.WebConsole)
+- name: DbConsole
+  value: $(ref.ansible.DbConsole)
+- name: user
+  value: $(ref.ansible.user)
+- name: password
+  value: $(ref.ansible.password)

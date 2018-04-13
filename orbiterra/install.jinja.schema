@@ -1,0 +1,16 @@
+imports:
+- path: ansibe-engine.jinja
+- path: helpers-common.jinja
+- path: helpers-random-string.py
+
+outputs:
+  AnsibleConsole:
+    type: string
+  WebConsole:
+    type: string
+  DbConsole:
+    type: string
+  user:
+    type: string
+  password:
+    type: string
