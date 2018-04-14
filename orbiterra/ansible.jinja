@@ -95,7 +95,8 @@ resources:
           echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
           userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
           echo $userPassword | passwd --stdin ansible
-          runuser -l ansible "cd /home/ansible && git clone https://github.com/vincepower/ansible-testdrive.git"
+          (cd /home/ansible && git clone https://github.com/vincepower/ansible-testdrive.git)
+          chown -R ansible:ansible /home/ansible/ansible-testdrive
           echo '[ansible]' >> /etc/ansible/hosts
           echo '{{ vmansible }}' >> /etc/ansible/hosts
           echo '[web]' >> /etc/ansible/hosts
