@@ -51,3 +51,9 @@ hosts:
 gcloud --project openshift-test-drive deployment-manager deployments create <unique-gcp-instance-name> --template install.jinja
 ```
 
+### Ansible Scripts Used
+
+```
+git clone https://github.com/vincepower/ansible-testdrive
+```
+

@@ -95,6 +95,7 @@ resources:
           echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
           userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
           echo $userPassword | passwd --stdin ansible
+          runuser -l ansible "cd /home/ansible && git clone https://github.com/vincepower/ansible-testdrive.git"
           echo '[ansible]' >> /etc/ansible/hosts
           echo '{{ vmansible }}' >> /etc/ansible/hosts
           echo '[web]' >> /etc/ansible/hosts
@@ -148,12 +149,6 @@ resources:
           echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
           userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
           echo $userPassword | passwd --stdin ansible
-          echo '[ansible]' >> /etc/ansible/hosts
-          echo '{{ vmansible }}' >> /etc/ansible/hosts
-          echo '[web]' >> /etc/ansible/hosts
-          echo '{{ vmwebserver }}' >> /etc/ansible/hosts
-          echo '[db]' >> /etc/ansible/hosts
-          echo '{{ vmdb }}' >> /etc/ansible/hosts
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -202,12 +197,6 @@ resources:
           echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
           userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
           echo $userPassword | passwd --stdin ansible
-          echo '[ansible]' >> /etc/ansible/hosts
-          echo '{{ vmansible }}' >> /etc/ansible/hosts
-          echo '[web]' >> /etc/ansible/hosts
-          echo '{{ vmwebserver }}' >> /etc/ansible/hosts
-          echo '[db]' >> /etc/ansible/hosts
-          echo '{{ vmdb }}' >> /etc/ansible/hosts
     disks:
     - deviceName: boot
       type: PERSISTENT
