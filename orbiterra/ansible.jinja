@@ -103,6 +103,8 @@ resources:
           echo '{{ vmwebserver }}' >> /etc/ansible/hosts
           echo '[db]' >> /etc/ansible/hosts
           echo '{{ vmdb }}' >> /etc/ansible/hosts
+          echo 'export DBHOST={{ vmdb }}' >> /etc/bashrc
+          echo 'export WEBHOST={{ vmwebserver }}' >> /etc/bashrc
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -150,6 +152,7 @@ resources:
           echo '10.128.0.103 {{ vmdb }}' >> /etc/hosts
           userPassword=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/userPassword)
           echo $userPassword | passwd --stdin ansible
+          echo 'export DBHOST={{ vmdb }}' >> /etc/bashrc
     disks:
     - deviceName: boot
       type: PERSISTENT
