@@ -105,6 +105,13 @@ resources:
           echo '{{ vmdb }}' >> /etc/ansible/hosts
           echo 'export DBHOST={{ vmdb }}' >> /etc/bashrc
           echo 'export WEBHOST={{ vmwebserver }}' >> /etc/bashrc
+          echo 'echo ""' >> /home/ansible/.bashrc
+          echo 'echo "Sample scripts are availabe in the ansible-testdrive"' >> /home/ansible/.bashrc
+          echo 'echo "directory, or you could try running adhoc commands"' >> /home/ansible/.bashrc
+          echo 'echo "against the [web] and [db] servers configured."' >> /home/ansible/.bashrc
+          echo 'echo ""' >> /home/ansible/.bashrc
+          echo 'echo "example adhoc command: ansible all -a date"' >> /home/ansible/.bashrc
+          echo 'echo "=-=-=-=-=-=-=-=-="' >> /home/ansible/.bashrc
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -245,14 +252,14 @@ resources:
     length: 10
 
 outputs:
-- name: AnsibleConsole
-  value: ssh://ansible.$(ref.{{ vmansible }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
-- name: WebConsole
-  value: http://web.$(ref.{{ vmwebserver }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
-- name: DbConsole
-  value: mysql://db.$(ref.{{ vmdb }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
-- name: user
+- name: AnsibleHost
+  value: ansible.$(ref.{{ vmansible }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: WebServer
+  value: web.$(ref.{{ vmwebserver }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: DbServer
+  value: db.$(ref.{{ vmdb }}.networkInterfaces[0].accessConfigs[0].natIP).nip.io
+- name: ssh-user
   value: ansible
-- name: password
+- name: ssh-password
   value: $(ref.userPassword.string)
 
