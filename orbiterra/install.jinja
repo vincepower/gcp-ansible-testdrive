@@ -7,13 +7,13 @@ resources:
     mtype-default: n1-standard-1
 
 outputs:
-- name: AnsibleConsole
-  value: $(ref.ansible.AnsibleConsole)
-- name: WebConsole
-  value: $(ref.ansible.WebConsole)
-- name: DbConsole
-  value: $(ref.ansible.DbConsole)
-- name: user
-  value: $(ref.ansible.user)
-- name: password
-  value: $(ref.ansible.password)
+- name: AnsibleHost
+  value: $(ref.ansible.AnsibleHost)
+- name: ssh-user
+  value: $(ref.ansible.ssh-user)
+- name: ssh-password
+  value: $(ref.ansible.ssh-password)
+- name: WebServer
+  value: $(ref.ansible.WebServer)
+- name: DbServer
+  value: $(ref.ansible.DbServer)

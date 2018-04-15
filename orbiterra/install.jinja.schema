@@ -4,13 +4,13 @@ imports:
 - path: helpers-random-string.py
 
 outputs:
-  AnsibleConsole:
+  AnsibleHost:
     type: string
-  WebConsole:
+  ssh-user:
     type: string
-  DbConsole:
+  ssh-password:
     type: string
-  user:
+  WebServer:
     type: string
-  password:
+  DbServer:
     type: string
