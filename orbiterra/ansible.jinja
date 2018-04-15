@@ -105,13 +105,17 @@ resources:
           echo '{{ vmdb }}' >> /etc/ansible/hosts
           echo 'export DBHOST={{ vmdb }}' >> /etc/bashrc
           echo 'export WEBHOST={{ vmwebserver }}' >> /etc/bashrc
+          echo 'echo ""' >> /etc/motd
+          echo 'echo "========================="' >> /etc/motd
+          echo 'echo ""' >> /etc/motd
+          echo 'echo "Sample scripts are availabe in the ansible-testdrive"' >> /etc/motd
+          echo 'echo "directory, or you could try running adhoc commands"' >> /etc/motd
+          echo 'echo "against the [web] and [db] servers configured."' >> /etc/motd
           echo 'echo ""' >> /home/ansible/.bashrc
-          echo 'echo "Sample scripts are availabe in the ansible-testdrive"' >> /home/ansible/.bashrc
-          echo 'echo "directory, or you could try running adhoc commands"' >> /home/ansible/.bashrc
-          echo 'echo "against the [web] and [db] servers configured."' >> /home/ansible/.bashrc
-          echo 'echo ""' >> /home/ansible/.bashrc
-          echo 'echo "example adhoc command: ansible all -a date"' >> /home/ansible/.bashrc
-          echo 'echo "=-=-=-=-=-=-=-=-="' >> /home/ansible/.bashrc
+          echo 'echo "example adhoc command: ansible all -a date"' >> /etc/motd
+          echo 'echo ""' >> /etc/motd
+          echo 'echo "========================="' >> /etc/motd
+          echo 'echo ""' >> /etc/motd
     disks:
     - deviceName: boot
       type: PERSISTENT
